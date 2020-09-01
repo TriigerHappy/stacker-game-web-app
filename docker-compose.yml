@@ -1,0 +1,15 @@
+version: '3'
+services:
+  mysql:
+    build: ./mysql-srvc
+    ports:
+      - "6603:3306"
+  nodejs:
+    build: ./nodejs-srvc
+    links: "mysql:db"
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_HOST=mysql
+    depends_on:
+      - mysql

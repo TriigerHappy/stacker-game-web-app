@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <style>
+        canvas {
+            border: 1px solid #c0c0c0;
+            background-color: blanchedalmond;
+        }
+    </style>
+</head>
+<body onload="main()">
+<script>
+    const CANVAS_WIDTH = 450;
+    const CANVAS_HEIGHT = 750;
+    const TILE_SIZE = 50;
+    const GAME_TICK_RATE = 60; // in ticks per second
+    const RESERVED_UI_HEIGHT = 50;
+    var keyPressed = false;
+
+    document.addEventListener("keydown", keyDownHandler, false);
+    function keyDownHandler(e) {
+        if (e.key == " ") {
+            keyPressed = true;
+        }
+    }
+
+    // Creating Game object to house container and handle game updates/drawing
+    function Game(width, height, tileSize, tickRate) {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        this.tileSize = tileSize;
+        this.tickRate = tickRate;
+        this.gridWidth = (this.canvasWidth / this.tileSize);
+        this.gridHeight = (this.canvasHeight / this.tileSize);
+
+
+
+        this.canvas = document.createElement('CANVAS');
+        this.ctx = this.canvas.getContext('2d');
+
+        this.playerPosition = 0;
+        this.playerHealth = 3;
+        this.playerVelocity = 1;
+        this.playerHeight = 0;
+        this.playerPointer = 0;
+        this.difficulty = 15;   // score based off of difficulty (number of blocks places (1-3) * (15 - difficulty)
+        this.score = 0;
+
+        this.frameCounter = 0;
+
+        this.clearFrame = function () {
+            // Clear board before drawing new frame
+            this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        };
+
+        this.drawGame = function () {
+            // draw rectangles using the game board (made of an array of tuples (index, length)
+            this.ctx.fillStyle = "#000000";
+            this.ctx.clearRect(0, (this.canvasHeight - ((this.playerPointer + 1) * this.tileSize)),
+                this.canvasWidth, this.tileSize);
+            this.ctx.fillRect(this.playerPosition * this.tileSize, (this.canvasHeight - ((this.playerPointer + 1) * this.tileSize)),
+                this.playerHealth * this.tileSize, this.tileSize);
+
+
+            // UI drawing:
+            // score:
+            this.ctx.clearRect(0, 0, this.canvasWidth, TILE_SIZE);
+            this.ctx.font = "25px 'Courier New'";
+            this.ctx.fillText("Score: " + this.score, 20, 20);
+        };
+
+        this.gameUpdate = function () {
+            this.gameTick();
+        };
+
+        this.gameTick = function () {
+            // Game logic be here
+            if (keyPressed) {this.movePlayer();}
+            if (this.frameCounter >= 15 * (100 / (100 + (4 * this.playerHeight)))) {
+                // 100 / (100+Cx)
+                //
+                //
+                //
+                this.frameCounter = 0;
+                if ((((this.playerPosition + this.playerHealth) >= this.gridWidth)) || (this.playerPosition <= 0) &&
+                this.playerVelocity < 0)  {
+                    this.playerVelocity = this.playerVelocity * -1;
+                }
+                this.playerPosition += this.playerVelocity;
+                this.drawGame();
+                log(15 * (100 / (100 + (4 * this.playerHeight))));
+            }
+            this.frameCounter++;
+        };
+
+
+        this.movePlayer = function() {
+            // Handles player stacking
+            keyPressed = false;
+            if (this.playerHeight == 0) {                       // If we're at index 0, add the first block
+                this.gameBoard.push(new Block(this.playerPosition, this.playerHeight, this.playerHealth));
+                this.addScore(3);
+                this.playerHeight++;
+                this.playerPointer++;
+                return;
+            }
+            let blockDifference = Math.abs(this.gameBoard[this.playerHeight - 1].position - this.playerPosition);
+            if (this.playerHealth - blockDifference < 1) {
+                log("we lost");
+                this.gameOver();
+                return;
+            }
+            else {
+                /* Append new tuple with ({greater of indices}, {math.abs(difference of indices)}
+                    in this case last.length - abs(last.position - now.pos)
+
+
+                        [][][]
+                    [][][]
+
+                    0 1 2 3 4
+
+                 */
+                this.ctx.clearRect(0, this.canvasHeight - ((this.playerPointer + 1) * this.tileSize),
+                    this.canvasWidth, this.tileSize);
+                this.gameBoard.push(new Block(Math.max(this.gameBoard[this.playerHeight - 1].position, this.playerPosition),
+                    this.playerHeight,
+                    this.gameBoard[this.playerHeight - 1].length - blockDifference));
+                this.playerHealth -= blockDifference;
+                this.addScore(this.playerHealth);
+                this.gameBoard[this.playerHeight].draw(this.ctx);
+                this.playerHeight++;
+                this.playerPointer++;
+                if (this.playerHeight % 3 == 0 && this.difficulty > 1) {
+                    this.difficulty--;
+                }
+                if (this.playerHeight % 13 == 1) { // Wrap pointer back around when we reach the top (weird modulus due to working around block problems)
+                    this.playerPointer = 1;
+                    this.clearFrame();
+                    this.gameBoard[this.gameBoard.length - 1].draw(this.ctx);
+                }
+
+
+            }
+
+        };
+
+        this.addScore = function(value) {
+            value = value * 2.4 * ((100 + (4 * this.playerHeight)) / 100);
+            value = Math.trunc(value)
+            this.score += value;
+        }
+
+        // this.newGameBoard = function () {
+        //     // Initialize game board, 2d array height by width bottom to top, represented by falses and trues
+        //     let gameBoard = new Array(this.gridHeight);
+        //     for (let i = 0; i < this.gridHeight; i++) {
+        //         gameBoard[i] = new Array(this.gridWidth);
+        //         for (let j = 0; j < this.gridWidth; j++) {
+        //             gameBoard[i][j] = false;
+        //         }
+        //
+        //     }
+        //     log(gameBoard);
+        //     return gameBoard;
+        // };
+
+        this.gameInit = function () {
+            this.playerPosition = 0;
+            this.playerHeight = 0;
+            this.playerHealth = 3;
+            this.playerVelocity = 1;
+            this.playerPointer = 0;
+
+            this.score = 0;
+            this.gameBoard = [];
+            this.runloop = setInterval(() => this.gameUpdate(), 1000 / this.tickRate);
+            //
+
+        };
+
+        this.canvasInit = function () {
+            // Setting some attributes for the canvas
+            this.canvas.id = 'game_canvas';
+            this.canvas.width = this.canvasWidth;
+            this.canvas.height = this.canvasHeight;
+            // Add the canvas to div with id game_container
+            document.getElementById('game_container').appendChild(this.canvas);
+        };
+
+        this.gameOver = function () {
+            clearInterval(this.runloop);
+            this.clearFrame();
+            this.ctx.fillText("Game over! Final score: ", 50, 300);
+            this.ctx.fillText(this.score, 200, 350);
+            document.getElementById("game_container").style.display = "none";
+            document.getElementById("form_wrapper").style.display = "block";
+            document.getElementById("score_display").append(this.score);
+            document.getElementById("input_score").value = this.score;
+            this.getHighScore();
+            document.getElementById("high_scores").style.display = "block";
+        };
+
+        this.getHighScore = function () {
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    let table = document.getElementById("high_scores_table");
+                    if (xhttp.response) {
+                        let json = JSON.parse(xhttp.response);
+                        generateTableRows(table, json);
+                    }
+                    log(xhttp.response);
+                }
+            };
+            let random_num = Math.floor(Math.random() * 12345);
+            // request different resource each time to prevent caching
+            xhttp.open("GET", "/submit_scores?t=" + random_num, true);
+            xhttp.send();
+        };
+
+        // this.generateTableRows = function(table, data) {
+        //     // Generate and add a table row for each JSON object received
+        //     for (let element of data) {
+        //         let row = table.insertRow();
+        //         let cell_username = row.insertCell();
+        //         let cell_username_text = document.createTextNode(element["name"]);
+        //         cell_username.appendChild(cell_username_text);
+        //         let cell_score = row.insertCell();
+        //         let cell_score_value = document.createTextNode(element["score"]);
+        //         cell_score.appendChild(cell_score_value);
+        //     }
+        // }
+    }
+
+    function Block(position, height, length) {
+        this.position = position;
+        this.height = height;
+        this.length = length;
+
+        this.draw = function(ctx) {
+            // draw block using position * tile size, the y height uses modulus so that the blocks wrap back around to
+            // the bottom
+            ctx.fillRect(this.position * TILE_SIZE, (CANVAS_HEIGHT - (((this.height % 13) + 1) * TILE_SIZE)),
+                this.length * TILE_SIZE, TILE_SIZE)
+        }
+    }
+
+    function main() {
+        var game = new Game(CANVAS_WIDTH, CANVAS_HEIGHT, TILE_SIZE, GAME_TICK_RATE);
+        game.canvasInit();
+        game.gameInit();
+
+    }
+
+
+    function log(arg) {
+        console.log(arg);
+    }
+
+    function generateTableRows(table, data) {
+        // Generate and add a table row for each JSON object received
+        log(data.length);
+        for (let i = 0; i < data.length; i++) {
+            log("testing table row generation");
+            let row = table.insertRow();
+            let cell_username = row.insertCell();
+            let cell_username_text = document.createTextNode(data[i]["name"]);
+            cell_username.appendChild(cell_username_text);
+            let cell_score = row.insertCell();
+            let cell_score_value = document.createTextNode(data[i]["score"]);
+            cell_score.appendChild(cell_score_value);
+
+        }
+    }
+    </script>
+
+
+<div id="high_scores" style="display:none;">
+    <table id="high_scores_table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Score</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+</div>
+
+<div id="game_container">
+    <h2>Stacker!</h2>
+    <h4>Press <b>SPACEBAR</b> to play!</h4>
+</div>
+<div id="form_wrapper" style="display:none;">
+    <form action="/index.html" method="post">
+        <p id="score_display">Score: </p> <!-- Update this tag on high score form load--><br>
+        Please enter your name to submit your high score! <br>
+        <label for="input_name">Name:</label>
+        <input type="text" id="input_name" name="input_name" value="Anonymous"> <br>
+        <input type="hidden" name="input_score" id="input_score">
+        <input type="submit" value="Submit">
+    </form>
+
+</div>
+</body>
+</html>
+<!--
+Ideas for game: ignore the cell grid style tracking thing and just use math + numbers to figure it out
+x index of stack
+
+Intermediary idea:
+Store index and length for each level ie:
+xxxxooxx
+xxxoooxx
+xxxoooxx
+Store as array of tuples? (3,2)
+for stacking just reference the previous tuple
+
+ie landed on 3,3 above 2,3
+so new tuple is 3,2
+math for new tuple might be the index of the placed one
+
+
+[1] = placed, [0] = prev
+index of new tuple = index of placed unless index[1] < index[0], in which case index = index[0]
+index of new tuple = the lower of the two indexes
+
+length of the new tuple = index[1] - index[0], if length < 0 then we lost.
+
+maybe use modulus gridHeight to keep climbing upwards while drawing (ie draw at y 2000 % canvasHeight)
+This will allow us to keep climbing upwards and use height to calculate score and difficulty
+
+
+
+
+
+////////////DIFFICULTY SECTION///////////////
+100 / (100+Cx)
+x playerHeight
+
+
+
+
+
+
+
+-->
