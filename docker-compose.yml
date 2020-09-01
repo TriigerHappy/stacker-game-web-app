@@ -3,7 +3,7 @@ services:
   mysql:
     build: ./mysql-srvc
     ports:
-      - "3306:3306"
+      - "6603:3306"
   nodejs:
     build: ./nodejs-srvc
     ports:
