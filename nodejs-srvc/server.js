@@ -29,22 +29,13 @@ con.connect(function(err) {
 http.createServer(function (req, res) {
     var requrl = url.parse(req.url, true);
     var data = "";
-    con.connect(function(err) {
-        if (err) throw err;
-        console.log("connected");
-        // let query = "CREATE TABLE hi_score (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), score VARCHAR(255), ip_address VARCHAR(255))"
-        // con.query(query, function(err, result) {
-        //     if(err) throw err;
-        //     console.log("Succeeded");
-        // });
-    });
     if (requrl.pathname == '/submit_scores') {
         // return high scores
-        console.log("Got GET request")
+        console.log("Got GET request");
         var callback = function(err, result) {
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end(result);
-        }
+        };
         getHighScores(callback);
     }
 
