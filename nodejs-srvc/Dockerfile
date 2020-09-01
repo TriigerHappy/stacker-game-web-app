@@ -9,9 +9,9 @@ WORKDIR /usr/src/app
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
 COPY package*.json ./
+COPY wait-for.sh ./
 COPY index.html ./
 COPY server.js ./
-COPY wait-for.sh ./
 RUN npm install
 
 # Copy app source from current host directory to container working directory
