@@ -7,6 +7,6 @@ services:
   nodejs:
     build: ./nodejs-srvc
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
       - DATABASE_HOST=mysql
