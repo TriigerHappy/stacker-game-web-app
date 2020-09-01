@@ -7,7 +7,7 @@ var validator = require('validator');
 
 
 var con = mysql.createConnection({
-    host: "192.168.1.26",
+    host: process.env.DATABASE_HOST || '127.0.0.1',
     port: "6603",
     user: "Lbcsadmin",
     password: "Lbcsadmin",
