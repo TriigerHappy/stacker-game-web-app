@@ -3,12 +3,11 @@ services:
   mysql:
     build: ./mysql-srvc
     ports:
-      - "6603:3306"
+      - "3306:3306"
   nodejs:
     build: ./nodejs-srvc
     ports:
       - "4000:4000"
     environment:
       - DATABASE_HOST=mysql
-    depends_on:
-      - mysql
+    entrypoint: ./wait-for-it.sh mysql:3306
