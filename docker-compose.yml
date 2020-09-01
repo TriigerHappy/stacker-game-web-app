@@ -10,4 +10,4 @@ services:
       - "4000:4000"
     environment:
       - DATABASE_HOST=mysql
-    entrypoint: ./wait-for-it.sh mysql:3306
+    entrypoint: ./wait-for-it.sh mysql:3306 -- npm start
