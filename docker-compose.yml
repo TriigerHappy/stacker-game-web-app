@@ -10,4 +10,3 @@ services:
       - "4000:4000"
     environment:
       - DATABASE_HOST=mysql
-    command: sh -c './wait-for.sh -t 0 mysql:6603 -- npm start'
