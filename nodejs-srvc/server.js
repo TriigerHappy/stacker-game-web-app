@@ -14,16 +14,23 @@ var con = mysql.createConnection({
     database: "stacker"
 });
 
-con.connect(function(err) {
-   if (err) throw err;
-   console.log("connected");
-   // let query = "CREATE TABLE hi_score (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), score VARCHAR(255), ip_address VARCHAR(255))"
-   // con.query(query, function(err, result) {
-   //     if(err) throw err;
-   //     console.log("Succeeded");
-   // });
-});
+// code snippet adapted from https://gist.github.com/asalant/4092454
 
+var connectWithRetry = function() {
+    con.connect(function (err) {
+        if (err) {
+            console.error("Failed connection to DB, retry in 5 seconds");
+            setTimeout(connectWithRetry, 5000);
+        }
+        console.log("connected");
+        // let query = "CREATE TABLE hi_score (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), score VARCHAR(255), ip_address VARCHAR(255))"
+        // con.query(query, function(err, result) {
+        //     if(err) throw err;
+        //     console.log("Succeeded");
+        // });
+    });
+};
+connectWithRetry();
 
 
 http.createServer(function (req, res) {
